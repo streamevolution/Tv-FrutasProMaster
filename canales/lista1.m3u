@@ -278,3 +278,22 @@ https://s5.mexside.net:1936/tvmigrante/tvmigrante/playlist.m3u8
 http://181.78.8.199:8000/play/a0bt/index.m3u8
 #EXTINF:-1 tvg-id="XEIPNTDT.mx@SD" tvg-logo="https://enlace-a-imagen.com/logo.png",XEIPN-TDT (720p)
 https://s5.mexside.net:1936/stream/stream/index.m3u8
+#EXTINF:-1 tvg-id="MilenioTelevision.mx@SD" tvg-logo="https://enlace-a-imagen.com/logo.png",Milenio Televisión (720p) [Not 24/7]
+https://mdstrm.com/live-stream-playlist/610178c7db32a4112d994650.m3u8
+#EXTINF:-1 tvg-id="MultimediosBajio.mx@SD" tvg-logo="https://enlace-a-imagen.com/logo.png",Multimedios Bajío (720p) [Not 24/7]
+https://mdstrm.com/live-stream-playlist/5d4b0fec848918070128c8cb.m3u8
+#EXTINF:-1 tvg-id="MultimediosCDMX.mx@SD" tvg-logo="https://enlace-a-imagen.com/logo.png",Multimedios CDMX (720p) [Not 24/7]
+https://mdstrm.com/live-stream-playlist/5f2d9d6ff17144074bd8a284.m3u8
+#EXTINF:-1 tvg-id="MultimediosCiudadJuarez.mx@SD" tvg-logo="https://enlace-a-imagen.com/logo.png",Multimedios Ciudad Juárez (720p) [Not 24/7]
+https://mdstrm.com/live-stream-playlist/5d9e440d675235586a92be7f.m3u8
+#EXTINF:-1 tvg-id="MultimediosGuadalajara.mx@SD" tvg-logo="https://enlace-a-imagen.com/logo.png",Multimedios Guadalajara (720p) [Not 24/7]
+https://mdstrm.com/live-stream-playlist/5c54d38ca392a5119bb0aa0d.m3u8
+#EXTINF:-1 tvg-id="MultimediosLaguna.mx@SD" tvg-logo="https://enlace-a-imagen.com/logo.png",Multimedios Laguna (720p) [Not 24/7]
+https://mdstrm.com/live-stream-playlist/57bf686a61ff39e1085d43e1.m3u8
+#EXTINF:-1 tvg-id="MultimediosMonterrey.mx@SD" tvg-logo="https://enlace-a-imagen.com/logo.png",Multimedios Monterrey (720p) [Not 24/7]
+https://mdstrm.com/live-stream-playlist/57b4dbf5dbbfc8f16bb63ce1.m3u8
+#EXTINF:-1 tvg-id="MultimediosPuebla.mx@SD" tvg-logo="https://enlace-a-imagen.com/logo.png",Multimedios Puebla (720p) [Not 24/7]
+https://mdstrm.com/live-stream-playlist/5d56ed29c92dd106ff01543b.m3u8
+#EXTINF:-1 tvg-id="MultimediosSaltillo.mx@SD" tvg-logo="https://enlace-a-imagen.com/logo.png",Multimedios Saltillo (720p) [Not 24/7]
+https://mdstrm.com/live-stream-playlist/5d5d51a4e9a40e25f4a0332c.m3u8
+
