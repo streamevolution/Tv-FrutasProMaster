@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frutas-ProMaster | TV en Vivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .seccion { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen font-sans flex flex-col overflow-x-hidden">
+
+    <header class="sticky top-0 z-40 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 pt-6 pb-4 px-4 shadow-xl">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
+                Frutas-ProMaster TV
+            </h1>
+            <span id="canal-actual" class="text-xs font-bold text-gray-400 bg-gray-800 px-3 py-1 rounded-full truncate max-w-[150px]">
+                Selecciona un canal
+            </span>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl mx-auto w-full p-4 mt-2 pb-24">
+        
+        <div class="mb-8 sticky top-20 z-30">
+            <div class="flex items-center gap-2 mb-4">
+                <div id="indicador-vivo" class="w-3 h-3 bg-gray-600 rounded-full"></div>
+                <h2 class="text-xl font-bold">Reproductor</h2>
+            </div>
+            <div class="w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-700/50 relative aspect-video flex items-center justify-center">
+                <video id="video-reproductor" class="w-full h-full object-contain" controls crossorigin playsinline></video>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-6 border-t border-gray-800 pt-6">
+            <h2 class="text-xl font-bold">Canales Disponibles</h2>
+        </div>
+        
+        <div id="contenedor-canales" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            </div>
+
+    </main>
+
+    <nav class="fixed bottom-0 left-0 w-full z-40 bg-gray-900/95 backdrop-blur-lg border-t border-gray-800 pb-safe">
+        <div id="menu-categorias" class="max-w-4xl mx-auto flex justify-around items-center h-16 px-2 overflow-x-auto no-scrollbar">
+            </div>
+    </nav>
+
+    <script>
+        const video = document.getElementById('video-reproductor');
+        let hlsPlayer = null;
+        let listaDeCanalesGlobal = []; 
+        let categoriasGlobales = new Set(); 
+
+        // 1. AQUÍ AGREGAS LAS RUTAS DE TUS ARCHIVOS .m3u o .m3u8
+        // Cuando subas un archivo nuevo a tu carpeta en GitHub, lo agregas aquí
+        const archivosM3U = [
+            'canales/lista1.m3u',
+            'canales/lista2.m3u8'
+            // 'canales/lista3.m3u', 
+        ];
+
+        // FUNCIÓN PARA LEER Y EXTRAER DATOS DEL FORMATO M3U
+        async function parsearM3U(urlArchivo) {
+            try {
+                const respuesta = await fetch(urlArchivo);
+                if (!respuesta.ok) return []; // Si el archivo no existe, lo salta
+                
+                const texto = await respuesta.text();
+                const lineas = texto.split('\n');
+                const canales = [];
+                let canalActual = {};
+
+                for (let i = 0; i < lineas.length; i++) {
+                    const linea = lineas[i].trim();
+                    
+                    if (linea.startsWith('#EXTINF:')) {
+                        // Extraer logo (tvg-logo)
+                        const logoMatch = linea.match(/tvg-logo="([^"]+)"/);
+                        canalActual.logo = logoMatch ? logoMatch[1] : 'https://via.placeholder.com/150?text=TV';
+                        
+                        // Extraer categoría (group-title)
+                        const groupMatch = linea.match(/group-title="([^"]+)"/);
+                        canalActual.categoria = groupMatch ? groupMatch[1] : 'Otros';
+                        categoriasGlobales.add(canalActual.categoria); // Guardar categoría para el menú
+                        
+                        // Extraer nombre (lo que está después de la última coma)
+                        const partes = linea.split(',');
+                        canalActual.nombre = partes[partes.length - 1].trim();
+                    } 
+                    else if (linea && !linea.startsWith('#')) {
+                        // Si no es un comentario ni está vacía, es el enlace de video
+                        canalActual.url = linea;
+                        canales.push({...canalActual});
+                        canalActual = {}; // Limpiar para el siguiente canal
+                    }
+                }
+                return canales;
+            } catch (error) {
+                console.error(`Error procesando el archivo ${urlArchivo}:`, error);
+                return [];
+            }
+        }
+
+        // FUNCIÓN PRINCIPAL PARA CARGAR TODOS LOS ARCHIVOS
+        async function inicializarApp() {
+            const contenedor = document.getElementById('contenedor-canales');
+            contenedor.innerHTML = '<p class="text-blue-400 col-span-full text-center py-10 animate-pulse font-bold tracking-widest">CARGANDO SERVIDORES...</p>';
+
+            categoriasGlobales.add('Todos'); // Asegurarnos de que exista la opción 'Todos'
+
+            for (const archivo of archivosM3U) {
+                const canalesExtraidos = await parsearM3U(archivo);
+                listaDeCanalesGlobal = listaDeCanalesGlobal.concat(canalesExtraidos);
+            }
+
+            renderizarMenuCategorias();
+            renderizarCanales(listaDeCanalesGlobal);
+        }
+
+        // FUNCIÓN PARA CREAR EL MENÚ INFERIOR AUTOMÁTICAMENTE
+        function renderizarMenuCategorias() {
+            const menu = document.getElementById('menu-categorias');
+            menu.innerHTML = '';
+            
+            categoriasGlobales.forEach(categoria => {
+                const esTodos = categoria === 'Todos';
+                const colorTexto = esTodos ? 'text-blue-500' : 'text-gray-500 hover:text-gray-300';
+                
+                const btnHtml = `
+                    <button onclick="filtrarCanales('${categoria}', this)" class="nav-item ${colorTexto} flex flex-col items-center justify-center min-w-[70px] h-full transition-colors px-2">
+                        <span class="text-xs font-bold uppercase tracking-wider">${categoria}</span>
+                    </button>
+                `;
+                menu.innerHTML += btnHtml;
+            });
+        }
+
+        function renderizarCanales(canales) {
+            const contenedor = document.getElementById('contenedor-canales');
+            contenedor.innerHTML = ''; 
+
+            if (canales.length === 0) {
+                contenedor.innerHTML = '<p class="text-gray-400 col-span-full text-center py-10">No se encontraron canales. Verifica que las rutas de los archivos M3U sean correctas.</p>';
+                return;
+            }
+
+            canales.forEach((canal, index) => {
+                const tarjetaHtml = `
+                    <div onclick="reproducirCanal('${canal.url}', '${canal.nombre}')" class="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-gray-700/50 cursor-pointer hover:border-blue-500/50 hover:scale-105 transition-all flex flex-col items-center justify-center">
+                        <img src="${canal.logo}" alt="Logo" class="w-16 h-16 object-contain mb-3 rounded-lg bg-gray-900 p-2 shadow-inner">
+                        <span class="font-bold text-sm text-center w-full truncate">${canal.nombre}</span>
+                        <span class="text-[10px] text-gray-400 mt-1 uppercase tracking-wider">${canal.categoria}</span>
+                    </div>
+                `;
+                contenedor.innerHTML += tarjetaHtml;
+            });
+        }
+
+        function filtrarCanales(categoria, btnElement) {
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('text-blue-500');
+                btn.classList.add('text-gray-500');
+            });
+            btnElement.classList.remove('text-gray-500');
+            btnElement.classList.add('text-blue-500');
+
+            if (categoria === 'Todos') {
+                renderizarCanales(listaDeCanalesGlobal);
+            } else {
+                const filtrados = listaDeCanalesGlobal.filter(c => c.categoria === categoria);
+                renderizarCanales(filtrados);
+            }
+        }
+
+        function reproducirCanal(url, nombre) {
+            document.getElementById('canal-actual').innerText = nombre;
+            const indicador = document.getElementById('indicador-vivo');
+            
+            indicador.classList.remove('bg-gray-600');
+            indicador.classList.add('bg-red-500', 'animate-pulse');
+
+            if (hlsPlayer) {
+                hlsPlayer.destroy();
+            }
+
+            if (Hls.isSupported()) {
+                hlsPlayer = new Hls();
+                hlsPlayer.loadSource(url);
+                hlsPlayer.attachMedia(video);
+                hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
+                    video.play();
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+                video.addEventListener('loadedmetadata', function() {
+                    video.play();
+                });
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ARRANCAR LA APLICACIÓN
+        inicializarApp();
+
+    </script>
+</body>
+</html>
