@@ -67,9 +67,10 @@
         // TUS ARCHIVOS M3U EN GITHUB
         const archivosM3U = [
             'canales/lista1.m3u',
-            'canales/lista2.m3u8'
-            'https://raw.githubusercontent.com/BuddyChewChew/pluto/main/pluto_mx.m3u' // <- El bot de la comunidad actualiza esto automáticamente
+            'canales/lista2.m3u8', // <--- ¡AQUÍ ESTÁ LA COMA QUE FALTABA!
+            'https://raw.githubusercontent.com/BuddyChewChew/pluto/main/pluto_mx.m3u' 
         ];
+
 
         async function parsearM3U(urlArchivo) {
             try {
